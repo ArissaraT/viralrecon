@@ -38,7 +38,8 @@
                     "type": "string",
                     "format": "directory-path",
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
-                    "fa_icon": "fas fa-folder-open"
+                    "fa_icon": "fas fa-folder-open",
+                    "default": "results"
                 },
                 "email": {
                     "type": "string",
@@ -147,22 +148,6 @@
                     "help_text": "e.g. '--fastq_dir ./20191023_1522_MC-110615_0_FAO93606_12bf9b4f/fastq_pass/'.",
                     "fa_icon": "fas fa-folder-open"
                 },
-                "fast5_dir": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "description": "Path to a folder containing fast5 files from the Nanopore run.",
-                    "help_text": "e.g. '--fast5_dir ./20191023_1522_MC-110615_0_FAO93606_12bf9b4f/fast5_pass/'. Not required when running the pipeline with the '--artic_minion_caller medaka' workflow.",
-                    "fa_icon": "fas fa-folder-open"
-                },
-                "sequencing_summary": {
-                    "type": "string",
-                    "format": "file-path",
-                    "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.txt$",
-                    "description": "Sequencing summary file generated after Nanopore run completion.",
-                    "help_text": " e.g. '--sequencing_summary ./20191023_1522_MC-110615_0_FAO93606_12bf9b4f/sequencing_summary.txt'. Not required when running the pipeline with the '--artic_minion_caller medaka' workflow.",
-                    "fa_icon": "fas fa-file"
-                },
                 "min_barcode_reads": {
                     "type": "integer",
                     "default": 100,
@@ -175,29 +160,24 @@
                     "description": "Minimum number of reads required after the artic guppyplex process per sample/barcode in order to be considered for the downstream processing steps.",
                     "fa_icon": "fas fa-hand-paper"
                 },
-                "artic_minion_caller": {
+                "sequencing_summary": {
                     "type": "string",
-                    "default": "nanopolish",
-                    "description": "Variant caller used when running artic minion (default: 'nanopolish').",
-                    "fa_icon": "fas fa-phone-volume",
-                    "enum": ["nanopolish", "medaka"]
+                    "format": "file-path",
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.txt$",
+                    "description": "Sequencing summary file generated after Nanopore run completion.",
+                    "help_text": " e.g. '--sequencing_summary ./20191023_1522_MC-110615_0_FAO93606_12bf9b4f/sequencing_summary.txt'. Not required when running the pipeline with the '--artic_minion_caller medaka' workflow.",
+                    "fa_icon": "fas fa-file"
                 },
-                "artic_minion_aligner": {
+                "artic_minion_clair3_model": {
                     "type": "string",
-                    "default": "minimap2",
-                    "description": "Aligner used when running artic minion (default: 'minimap2').",
-                    "fa_icon": "fas fa-map-signs",
-                    "enum": ["minimap2", "bwa"]
+                    "description": "Parameter passed to artic minion. If the mode is not provided, the pipeline will try to select an appropriate model based upon the basecall_model_version_id flag in the read file header",
+                    "help_text": "See https://github.com/nanoporetech/medaka",
+                    "fa_icon": "fas fa-train"
                 },
-                "artic_scheme": {
+                "artic_minion_clair3_model_dir": {
                     "type": "string",
-                    "description": "Primer scheme recognised by the artic minion command.",
-                    "help_text": "e.g. '--artic_scheme ncov-2019'. See https://artic.readthedocs.io/en/latest/primer-schemes/ and https://github.com/artic-network/primer-schemes/blob/master/schemes_manifest.json.",
-                    "fa_icon": "fas fa-stream"
-                },
-                "artic_minion_medaka_model": {
-                    "type": "string",
-                    "description": "Parameter passed to artic minion and required when using the '--artic_minion_caller medaka' workflow.",
+                    "description": "Parameter passed to artic minion and required when the model is provided.",
                     "help_text": "See https://github.com/nanoporetech/medaka",
                     "fa_icon": "fas fa-train"
                 },

@@ -4,32 +4,25 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-def valid_params = [
-    artic_minion_caller  : ['nanopolish', 'medaka'],
-    artic_minion_aligner : ['minimap2', 'bwa']
-]
-
 def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
-// Validate input parameters
-WorkflowNanopore.initialise(params, log, valid_params)
-
 def checkPathParamList = [
-    params.input, params.fastq_dir, params.fast5_dir,
-    params.sequencing_summary, params.gff
+    params.input, params.fastq_dir, params.gff
 ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 if (params.input)              { ch_input              = file(params.input)              }
-if (params.fast5_dir)          { ch_fast5_dir          = file(params.fast5_dir)          } else { ch_fast5_dir          = [] }
-if (params.sequencing_summary) { ch_sequencing_summary = file(params.sequencing_summary) } else { ch_sequencing_summary = [] }
 
-// Need to stage medaka model properly depending on whether it is a string or a file
-ch_medaka_model = Channel.empty()
-if (params.artic_minion_caller == 'medaka') {
-    if (file(params.artic_minion_medaka_model).exists()) {
-        ch_medaka_model = Channel.fromPath(params.artic_minion_medaka_model)
-    }
+// The required model for artic minion
+if (!params.artic_minion_clair3_model && !params.artic_minion_clair3_model_dir) {
+    error ("ERROR: The model to use for clair3 and a directory containing clair3 models are not specified!, please specify the model with '--artic_minion_clair3_model' and path to the directory with '--artic_minion_clair3_model_dir'")
+} else if (params.artic_minion_clair3_model && !params.artic_minion_clair3_model_dir) {
+    error ("ERROR: A directory containing clair3 models is not specified!, please specify it with '--artic_minion_clair3_model_dir'")
+} else if (!params.artic_minion_clair3_model && params.artic_minion_clair3_model_dir) {
+    error ("ERROR: The model to use for clair3 is not specified!, please specify it with '--artic_minion_clair3_model'")
+} else {
+    ch_clair3_model  = Channel.value(params.artic_minion_clair3_model)
+    ch_clair3_model_dir = Channel.fromPath(file(params.artic_minion_clair3_model_dir, checkIfExists: true, type: 'dir'))
 }
 
 /*
@@ -274,7 +267,7 @@ workflow NANOPORE {
                 return [ "$meta.id\t$count" ]
         }
         .set { ch_pass_fail_guppyplex_count }
-
+    
     ch_pass_fail_guppyplex_count
         .fail
         .collect()
@@ -295,19 +288,23 @@ workflow NANOPORE {
         ch_versions = ch_versions.mix(NANOPLOT.out.versions.first().ifEmpty(null))
     }
 
+    ch_clair3_model_dir
+        .combine(ch_clair3_model)
+        .map { model_dir, model -> [ [:], model_dir, model ] }
+        .set { ch_model_for_artic_minion }
+
+    PREPARE_GENOME.out.fasta
+        .combine(PREPARE_GENOME.out.primer_bed)
+        .map { fasta, bed -> [ [:], fasta, bed ] }
+        .set { ch_primer_scheme }
+
     //
     // MODULE: Run Artic minion
     //
     ARTIC_MINION (
         ARTIC_GUPPYPLEX.out.fastq.filter { it[-1].countFastq() > params.min_guppyplex_reads },
-        ch_fast5_dir,
-        ch_sequencing_summary,
-        PREPARE_GENOME.out.fasta.collect(),
-        PREPARE_GENOME.out.primer_bed.collect(),
-        ch_medaka_model.collect().ifEmpty([]),
-        params.artic_minion_medaka_model ?: '',
-        params.artic_scheme,
-        params.primer_set_version
+        ch_model_for_artic_minion,
+        ch_primer_scheme
     )
     ch_versions = ch_versions.mix(ARTIC_MINION.out.versions.first().ifEmpty(null))
 

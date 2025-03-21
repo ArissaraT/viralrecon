@@ -222,6 +222,23 @@ def medaka_bcftools_query_to_table(bcftools_query_file):
 
     return table
 
+## Returns a pandas dataframe in the format:
+#         CHROM    POS REF ALT FILTER  DP    AF
+# 0  MN908947.3    241   C   T   PASS  21  1.00
+# 1  MN908947.3   3037   C   T   PASS  28  0.89
+def clair3_bcftools_query_to_table(bcftools_query_file):
+    table = pd.read_table(bcftools_query_file, header="infer")
+    table = table.dropna(how="all", axis=1)
+    old_colnames = list(table.columns)
+    new_colnames = [x.split("]")[-1].split(":")[-1] for x in old_colnames]
+    table.rename(columns=dict(zip(old_colnames, new_colnames)), inplace=True)
+
+    if not table.empty:
+        table["DP"] = table["DP"].apply(pd.to_numeric)
+        table["AF"] = table["AF"].round(2)
+
+    return table
+
 
 def get_pangolin_lineage(pangolin_file):
     table = pd.read_csv(pangolin_file, sep=",", header="infer")
@@ -260,7 +277,7 @@ def main(args=None):
     make_dir(out_dir)
 
     ## Check correct variant caller has been provided
-    variant_callers = ["ivar", "bcftools", "nanopolish", "medaka"]
+    variant_callers = ["ivar", "bcftools", "nanopolish", "medaka", "clair3"]
     if args.variant_caller not in variant_callers:
         logger.error(
             f"Invalid option '--variant caller {args.variant_caller}'. Valid options: " + ", ".join(variant_callers)
@@ -299,6 +316,8 @@ def main(args=None):
             bcftools_table = nanopolish_bcftools_query_to_table(bcftools_files[sample])
         elif args.variant_caller == "medaka":
             bcftools_table = medaka_bcftools_query_to_table(bcftools_files[sample])
+        elif args.variant_caller == "clair3":
+            bcftools_table = clair3_bcftools_query_to_table(bcftools_files[sample])
 
         if not bcftools_table.empty:
             ## Read in SnpSift file

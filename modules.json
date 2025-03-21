@@ -17,7 +17,7 @@
                     },
                     "artic/minion": {
                         "branch": "master",
-                        "git_sha": "0f8a77ff00e65eaeebc509b8156eaa983192474b",
+                        "git_sha": "b44f728e80a1420b9f130061d91f7ff86673735a",
                         "installed_by": ["modules"]
                     },
                     "bandage/image": {
