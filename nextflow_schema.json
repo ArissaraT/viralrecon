@@ -177,7 +177,7 @@
                 },
                 "artic_minion_clair3_model_dir": {
                     "type": "string",
-                    "format": "file-path",
+                    "format": "directory-path",
                     "description": "Parameter passed to artic minion and required when the model is provided.",
                     "help_text": "See https://github.com/nanoporetech/medaka",
                     "fa_icon": "fas fa-train"
